@@ -7,14 +7,48 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+type SiteData struct {
+	SiteId   int
+	SiteName string
+	Country  string
+}
+
 func main() {
+
+	sites, err := GetSites()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(sites[0].SiteName)
+	fmt.Println(sites[1].SiteName)
+
+}
+
+func GetSites() ([]*SiteData, error) {
 
 	db := GetDbConnection()
 
-	// defer the close till after the main function has finished
-	// executing
+	rows, err := db.Query("select * from websitedata.website where sitename like '%site%'")
+
+	sites := make([]*SiteData, 0)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+
+		site := new(SiteData)
+		err := rows.Scan(&site.SiteId, &site.SiteName, &site.Country)
+		if err != nil {
+			return nil, err
+		}
+		sites = append(sites, site)
+	}
+
 	defer db.Close()
 
+	return sites, nil
 }
 
 func GetDbConnection() *sql.DB {
